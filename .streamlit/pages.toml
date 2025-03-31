@@ -1,0 +1,10 @@
+[[pages]]
+name = "Engagement Dashboard"
+icon = ":popcorn:"
+is_section = true
+
+[[pages]]
+path = "app_pages/CR_Engagement.py"
+name = "CR Engagement"
+icon = ":yellow_heart:"
+
