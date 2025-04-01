@@ -44,7 +44,7 @@ def engagement_histogram_below_threshhold(df, percentile, lower_limit=60, key="k
             hovertemplate="%{y} users<br>%{x:.2f} min<extra></extra>")
 
     # Display in Streamlit
-    st.plotly_chart(fig, use_container_width=True, key=f"{key}-2")
+    st.plotly_chart(fig, use_container_width=True, key=key)
 
 
 # Log-scale histogram of total engagement time with manual binning and custom hover text
@@ -120,8 +120,45 @@ def engagement_histogram_log(df, key, percentile=1.00, nbins=30, lower_limit=60,
         title=f"Log10 Histogram of Engagement Time (≤ {int(percentile*100)}th Percentile)")
 
     # Display in Streamlit
-    st.plotly_chart(fig, use_container_width=True, key=f"{key}-3")
+    st.plotly_chart(fig, use_container_width=True, key=key)
 
+def engagement_scatter_plot(df, key="key"):
+    fig = px.scatter(df,
+                     x="engagement_event_count",
+                     y="total_time_seconds",
+                     title="User Engagement: Events vs. Time",
+                     color="country",
+                     labels={
+                         "engagement_event_count": "Engagement Event Count",
+                         "total_time_seconds": "Total Time (s)"
+                     },
+                     hover_data=["country"])
+
+    # Display in Streamlit
+    st.plotly_chart(fig, use_container_width=True, key=key)
+
+def engagement_pareto_chart(df,key="key"):
+    
+    top_countries = df["country"].value_counts()
+    valid_countries = top_countries[top_countries >= 100].index
+    df = df[df["country"].isin(valid_countries)]
+
+    df_sorted = df.sort_values(by="total_time_seconds",
+                            ascending=False).reset_index(drop=True)
+    df_sorted["cumulative_time"] = df_sorted["total_time_seconds"].cumsum()
+    df_sorted["cumulative_percent"] = 100 * \
+        df_sorted["cumulative_time"] / df_sorted["total_time_seconds"].sum()
+    df_sorted["user_rank"] = range(1, len(df_sorted) + 1)
+    df_sorted["user_percent"] = 100 * df_sorted["user_rank"] / len(df_sorted)
+
+
+    # Single chart with color by country
+    fig = px.line(df_sorted, x="user_percent", y="cumulative_percent", 
+                  color="country",
+                title="Cumulative Engagement by Country (Pareto)",
+                labels={"user_percent": "% of Users", "cumulative_percent": "Cumulative % Time"})
+
+    st.plotly_chart(fig, use_container_width=True, key=key)
 
 # Caches a CSV version of the dataframe for downloads
 @st.cache_data

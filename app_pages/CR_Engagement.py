@@ -12,7 +12,7 @@ settings.init_user_list()
 
 
 df_cr_engagement = st.session_state["df_cr_engagement"]
-tab1, tab2, tab3 = st.tabs(["Histograms", "blank", "blank"])
+tab1, tab2, tab3 = st.tabs(["Histograms", "Scatter Plot", "Pareto"])
 
 with tab1:
     by_percent = st.toggle("By Percent",value=True)
@@ -24,3 +24,9 @@ with tab1:
 csv = ui.convert_for_download(df_cr_engagement)    
 st.download_button(label="Download CSV", data=csv, file_name="df_cr_engagement.csv",
                    key="fc-10", icon=":material/download:", mime="text/csv")
+
+with tab2:
+    uic.engagement_scatter_plot(df_cr_engagement, key="CRE-3")
+    
+with tab3:
+    uic.engagement_pareto_chart(df_cr_engagement, key="CRE-4")
