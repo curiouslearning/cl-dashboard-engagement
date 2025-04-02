@@ -16,4 +16,4 @@ RUN pip3 install -r requirements.txt
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "python add_ga.py && streamlit run main.py --server.port=8080"]
+CMD ["sh", "-c", "streamlit run main.py --server.port=8080"]
