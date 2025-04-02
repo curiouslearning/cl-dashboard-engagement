@@ -9,41 +9,84 @@ import streamlit as st
 def convert_for_download(df):
     return df.to_csv().encode("utf-8")
 
+
 # Linear histogram of total engagement time (in minutes), with optional percent mode
-def engagement_histogram(df,min_seconds=60, key="key", as_percent=False):
+def engagement_histogram(df, min_seconds=60, key="key", as_percent=False, percent_cutoff=0.5):
+    import numpy as np
+    import pandas as pd
+    import plotly.graph_objects as go
+    import streamlit as st
 
-    # Filter out very short sessions
+    # Toggle to determine percent base
+    show_percent_of_all = st.toggle(
+        "Show % of all users", value=False, key=f"{key}-toggle")
+
+    # Step 1: Filter users
     df_trimmed = df[df["total_time_seconds"] > min_seconds].copy()
-
-    # Convert seconds to minutes for x-axis readability
     df_trimmed["total_time_minutes"] = df_trimmed["total_time_seconds"] / 60
 
-    histnorm = "percent" if as_percent else None
+    # Step 2: Define bins starting from min threshold
+    bin_start = min_seconds / 60
+    bin_end = df_trimmed["total_time_minutes"].max() + 1
+    bin_width = 11
+    bin_edges = np.arange(bin_start, bin_end, bin_width)
+    if len(bin_edges) < 2:
+        bin_edges = np.array([bin_start, bin_start + bin_width])
 
-    # Plot histogram
-    fig = px.histogram(
-        df_trimmed,
-        x="total_time_minutes",
-        nbins=50,
-        histnorm=histnorm,
-        title=f"Engagement Time (>{min_seconds/60}m",
-        labels={"total_time_minutes": "Total Time (minutes)"}
+    bin_labels = [
+        f"{int(bin_edges[i])}–{int(bin_edges[i + 1])} min"
+        for i in range(len(bin_edges) - 1)
+    ]
+
+    # Step 3: Assign bins and count
+    df_trimmed["bin"] = pd.cut(
+        df_trimmed["total_time_minutes"],
+        bins=bin_edges,
+        labels=bin_labels,
+        include_lowest=True
     )
 
-    # Update y-axis label based on percent toggle
-    fig.update_layout(bargap=0.1)
-    fig.update_yaxes(title_text="% of Users" if as_percent else "User Count")
+    bin_counts = df_trimmed["bin"].value_counts(sort=False).reset_index()
+    bin_counts.columns = ["bin", "count"]
+    bin_counts["bin"] = bin_counts["bin"].astype(str)
 
-    # Custom hover formatting
+    # Step 4: Calculate values & hovertext
     if as_percent:
-        fig.update_traces(
-            hovertemplate="%{y:.2f}% of users<br>%{x:.2f} min<extra></extra>")
-    else:
-        fig.update_traces(
-            hovertemplate="%{y} users<br>%{x:.2f} min<extra></extra>")
+        if show_percent_of_all:
+            total = df["user_pseudo_id"].nunique()
+        else:
+            total = df_trimmed["user_pseudo_id"].nunique()
 
-    # Display in Streamlit
-    st.plotly_chart(fig, use_container_width=True, key=key)
+        bin_counts["percent"] = 100 * bin_counts["count"] / total
+        bin_counts = bin_counts[bin_counts["percent"] >= percent_cutoff]
+
+        y_vals = bin_counts["percent"]
+        hovertext = bin_counts.apply(
+            lambda row: f"{row['percent']:.2f}% of users<br>{row['bin']}", axis=1)
+    else:
+        bin_counts = bin_counts[bin_counts["count"] >= 50]
+        y_vals = bin_counts["count"]
+        hovertext = bin_counts.apply(
+            lambda row: f"{row['count']} users<br>{row['bin']}", axis=1)
+
+    # Step 5: Plot
+    fig = go.Figure(data=[
+        go.Bar(
+            x=bin_counts["bin"],
+            y=y_vals,
+            hovertext=hovertext,
+            hovertemplate="%{hovertext}<extra></extra>"
+        )
+    ])
+
+    fig.update_layout(
+        title=f"Engagement Time (users > {min_seconds / 60:.1f} min playing time)",
+        xaxis_title="Total Time (minutes)",
+        yaxis_title="% of Users" if as_percent else "User Count",
+        bargap=0.1
+    )
+
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}")
 
 
 # Log-scale histogram of total engagement time with manual binning and custom hover text
@@ -114,7 +157,7 @@ def engagement_histogram_log(df, key, nbins=30, min_seconds=60, as_percent=False
         tickvals=tickvals,
         ticktext=ticktext,
         range=[min_log, max_log],
-        title_text="Total Time (log scale, in minutes)"
+        title_text="Total Time (log scale, in minutes)( users >{min_seconds/60:.1f} min playing time)"
     )
 
     fig.update_yaxes(title_text="% of Users" if as_percent else "User Count")
@@ -123,7 +166,7 @@ def engagement_histogram_log(df, key, nbins=30, min_seconds=60, as_percent=False
     )
 
     # Display in Streamlit
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}")
 
 
 def engagement_scatter_plot(df, min_seconds=60, key="key"):
@@ -143,7 +186,7 @@ def engagement_scatter_plot(df, min_seconds=60, key="key"):
 
     fig.update_traces(
         hovertemplate="Country: %{customdata[0]}<br>Events: %{x}<br>%{y:.2f} minutes")
-    st.plotly_chart(fig, use_container_width=True, key=key)
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}")
 
 
 def engagement_pareto_chart(df, min_seconds=60, key="key"):
@@ -168,9 +211,7 @@ def engagement_pareto_chart(df, min_seconds=60, key="key"):
                   title="Cumulative Engagement by Country (Pareto)",
                   labels={"user_percent": "% of Users", "cumulative_percent": "Cumulative % of Time (min)"})
 
-    st.plotly_chart(fig, use_container_width=True, key=key)
-
-
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}")
 
 def engagement_box_plot(df, key="key", min_seconds=60):
     # Filter users with very short sessions
@@ -189,7 +230,7 @@ def engagement_box_plot(df, key="key", min_seconds=60):
     )
 
     fig.update_traces(hovertemplate="%{y:.2f} minutes")
-    st.plotly_chart(fig, use_container_width=True, key=f"{key}-violin")
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}")
 
 
     # Total Time by Country (in minutes)
@@ -203,7 +244,7 @@ def engagement_box_plot(df, key="key", min_seconds=60):
         points="all"
     )
     fig.update_traces(hovertemplate="Country: %{x}<br>%{y:.2f} minutes")
-    st.plotly_chart(fig, use_container_width=True, key=f"{key}-3")
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}-2")
     
 def most_engaged_users_chart(df,key="key"):   
     top_n = 20
@@ -216,14 +257,63 @@ def most_engaged_users_chart(df,key="key"):
     # Then plot using the minutes column
     fig = px.bar(
         df_top,
-        x="user_pseudo_id",
+        x="country",
         y="total_time_minutes",
         title=f"Top {top_n} Most Engaged Users (by Time)",
         labels={
-            "user_pseudo_id": "User ID",
+            "country": "Country of user",
             "total_time_minutes": "Total Time (min)"
         },
         text_auto=".2f"
     )
     fig.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig, use_container_width=True, key=key)
+    
+
+def first_open_vs_total_time(df, min_seconds=60, key="key"):
+    df = df[df["total_time_seconds"] > min_seconds].copy()
+    df["total_time_minutes"] = (df["total_time_seconds"] / 60)
+
+    # Create weekly cohort from first_open
+    df["first_open_date"] = pd.to_datetime(
+        df["first_open"]).dt.to_period("W").dt.to_timestamp()
+
+    # Aggregate by weekly cohort
+    df_weekly = df.groupby("first_open_date", observed=True).agg(
+        avg_time=("total_time_minutes", "mean"),
+        user_count=("user_pseudo_id", "count")
+    ).reset_index()
+
+    # Add rolling average
+    df_weekly["avg_time_smoothed"] = df_weekly["avg_time"].rolling(
+        window=3, min_periods=1).mean()
+
+    # Round values for readability
+    df_weekly["avg_time"] = df_weekly["avg_time"].round(2)
+    df_weekly["avg_time_smoothed"] = df_weekly["avg_time_smoothed"].round(2)
+
+    # Plot the main line
+    fig = px.line(
+        df_weekly,
+        x="first_open_date",
+        y="avg_time",
+        title="Avg Total Time by First Open Week",
+        labels={
+            "first_open_date": "First Open (Week)",
+            "avg_time": "Avg Time (min)",
+            "user_count": "Users"
+        },
+        hover_data={"user_count": True, "avg_time": True}
+    )
+
+    # Add rolling average line
+    fig.add_scatter(
+        x=df_weekly["first_open_date"],
+        y=df_weekly["avg_time_smoothed"],
+        mode="lines",
+        name="3-Week Rolling Avg",
+        line=dict(dash="dash", color="orange"),
+        hovertemplate="%{y:.2f} min<extra>3-Week Rolling Avg</extra>"
+    )
+
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}")
