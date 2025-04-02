@@ -12,10 +12,6 @@ def convert_for_download(df):
 
 # Linear histogram of total engagement time (in minutes), with optional percent mode
 def engagement_histogram(df, min_seconds=60, key="key", as_percent=False, percent_cutoff=0.5):
-    import numpy as np
-    import pandas as pd
-    import plotly.graph_objects as go
-    import streamlit as st
 
     # Toggle to determine percent base
     show_percent_of_all = st.toggle(
