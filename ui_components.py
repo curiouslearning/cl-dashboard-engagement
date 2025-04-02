@@ -204,3 +204,26 @@ def engagement_box_plot(df, key="key", min_seconds=60):
     )
     fig.update_traces(hovertemplate="Country: %{x}<br>%{y:.2f} minutes")
     st.plotly_chart(fig, use_container_width=True, key=f"{key}-3")
+    
+def most_engaged_users_chart(df,key="key"):   
+    top_n = 20
+
+    df_top = df.sort_values("total_time_seconds", ascending=False).head(top_n)
+    
+    df_top["total_time_minutes"] = df_top["total_time_seconds"] / 60
+
+
+    # Then plot using the minutes column
+    fig = px.bar(
+        df_top,
+        x="user_pseudo_id",
+        y="total_time_minutes",
+        title=f"Top {top_n} Most Engaged Users (by Time)",
+        labels={
+            "user_pseudo_id": "User ID",
+            "total_time_minutes": "Total Time (min)"
+        },
+        text_auto=".2f"
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig, use_container_width=True, key=key)

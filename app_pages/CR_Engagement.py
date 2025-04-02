@@ -18,7 +18,7 @@ with c1:
 df_cr_engagement = st.session_state["df_cr_engagement"]
 # 1. Create the tabs first
 tab1, tab2, tab3, tab4, tab5 = st.tabs(
-    ["Histograms", "Scatter Plot", "Pareto", "Box Plot", "Blank"])
+    ["Histograms", "Scatter Plot", "Pareto", "Box Plot", "Most Engaged"])
 
 
 with tab1:
@@ -39,6 +39,9 @@ with tab3:
 with tab4:
     uic.engagement_box_plot(
         df_cr_engagement, key="CRE-5", min_seconds=min_seconds)
+
+with tab5: 
+    uic.most_engaged_users_chart(df_cr_engagement,key="CRE=6")
 
     
 
