@@ -12,3 +12,4 @@ Streamlit Dashboard for User Engagement Analysis
 
 docker build  --no-cache --platform linux/amd64  -t gcr.io/dataexploration-193817/cl-dashboard-engagement:latest . 
 docker push gcr.io/dataexploration-193817/cl-dashboardengagement:latest
+#
