@@ -313,3 +313,144 @@ def first_open_vs_total_time(df, min_seconds=60, key="key"):
     )
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_seconds}")
+    
+def engagement_by_country_bar_chart(df,key="key"):
+
+    # Convert to minutes
+    df["total_time_minutes"] = df["total_time_seconds"] / 60
+
+    # Count users per country
+    user_counts = df.groupby("country")[
+        "user_pseudo_id"].nunique().reset_index(name="user_count")
+
+    # Filter to countries with more than 100 users
+    eligible_countries = user_counts[user_counts["user_count"] > 100]["country"]
+    df_filtered = df[df["country"].isin(eligible_countries)]
+
+    # Aggregate metrics
+    agg_df = df_filtered.groupby("country").agg(
+        user_count=("user_pseudo_id", "nunique"),
+        total_time_minutes_sum=("total_time_minutes", "sum"),
+        engagement_event_count_sum=("engagement_event_count", "sum"),
+        avg_time_per_user=("total_time_minutes", "mean"),
+        avg_events_per_user=("engagement_event_count", "mean")
+    ).reset_index()
+
+    # Sort for each chart
+    top_time = agg_df.sort_values(
+        "total_time_minutes_sum", ascending=False).head(20)
+    top_events = agg_df.sort_values(
+        "engagement_event_count_sum", ascending=False).head(20)
+    avg_time = agg_df.sort_values("avg_time_per_user", ascending=False).head(20)
+    avg_events = agg_df.sort_values(
+        "avg_events_per_user", ascending=False).head(20)
+
+    # Plot
+    fig = go.Figure()
+
+
+    # Trace for Total Time (minutes)
+    fig.add_trace(go.Bar(
+        x=top_time["country"],
+        y=top_time["total_time_minutes_sum"],
+        name="Total Time (minutes)",
+        visible=True,
+        hovertemplate=(
+            "<b>%{x}</b><br>" +
+            "Total Minutes: %{y:,.0f}<extra></extra>"
+        )
+    ))
+
+    # Trace for Total Events
+    fig.add_trace(go.Bar(
+        x=top_events["country"],
+        y=top_events["engagement_event_count_sum"],
+        name="Total Engagement Events",
+        visible=False,
+        hovertemplate=(
+            "<b>%{x}</b><br>" +
+            "Total Events: %{y:,}<extra></extra>"
+        )
+    ))
+
+    # Trace for Avg Time per User
+    fig.add_trace(go.Bar(
+        x=avg_time["country"],
+        y=avg_time["avg_time_per_user"],
+        name="Avg Time per User (minutes)",
+        visible=False,
+        hovertemplate=(
+            "<b>%{x}</b><br>" +
+            "Avg Minutes per User: %{y:.2f}<br>" +
+            "Total Minutes: %{customdata[0]:,.0f}<br>" +
+            "Users: %{customdata[1]:,}<extra></extra>"
+        ),
+        customdata=avg_time[["total_time_minutes_sum", "user_count"]].values
+    ))
+
+    # Trace for Avg Events per User
+    fig.add_trace(go.Bar(
+        x=avg_events["country"],
+        y=avg_events["avg_events_per_user"],
+        name="Avg Events per User",
+        visible=False,
+        hovertemplate=(
+            "<b>%{x}</b><br>" +
+            "Avg Events per User: %{y:.2f}<br>" +
+            "Total Events: %{customdata[0]:,.0f}<br>" +
+            "Users: %{customdata[1]:,}<extra></extra>"
+        ),
+        customdata=avg_events[["engagement_event_count_sum", "user_count"]].values
+    ))
+
+
+    # Toggle buttons
+    fig.update_layout(
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="right",
+                showactive=True,
+                x=0.5,
+                y=1.2,
+                xanchor="center",
+                yanchor="top",
+                bgcolor="#d9d9d9",
+                bordercolor="#2c2c2c",
+                borderwidth=2,
+                font=dict(color="#000", size=13),
+                pad={"r": 10, "t": 10},
+                buttons=[
+                    dict(label="Total Time (minutes)",
+                        method="update",
+                        args=[{"visible": [True, False, False, False]},
+                            {"title": "Top Countries by Total Time (minutes)",
+                                "yaxis": {"title": "Total Time (minutes)"}}]),
+                    dict(label="Total Events",
+                        method="update",
+                        args=[{"visible": [False, True, False, False]},
+                            {"title": "Top Countries by Engagement Event Count",
+                                "yaxis": {"title": "Event Count"}}]),
+                    dict(label="Avg Time per User",
+                        method="update",
+                        args=[{"visible": [False, False, True, False]},
+                            {"title": "Top Countries by Avg Time per User",
+                                "yaxis": {"title": "Avg Minutes per User"}}]),
+                    dict(label="Avg Events per User",
+                        method="update",
+                        args=[{"visible": [False, False, False, True]},
+                            {"title": "Top Countries by Avg Events per User",
+                                "yaxis": {"title": "Avg Events per User"}}])
+                ]
+            )
+        ],
+        title="Top Countries by Total Time (minutes)",
+        xaxis_title="Country",
+        yaxis_title="Total Time (minutes)",
+        barmode='group',
+        height=600
+    )
+
+
+
+    st.plotly_chart(fig, use_container_width=True, key=f"{key}")
