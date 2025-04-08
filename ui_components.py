@@ -481,7 +481,7 @@ def cumulative_distribution_chart(df, key="key"):
         )
 
     if option == "Users Over Time":
-        step = 5
+        step = 1
         cdf_df = compute_cdf(df, "total_time_minutes", step)
         x_label = "Time Threshold (minutes)"
         y_label = "Percent of Users with More Time"
@@ -490,7 +490,7 @@ def cumulative_distribution_chart(df, key="key"):
             "Users Above Threshold: %{y:.2f}%<extra></extra>"
         )
     else:
-        step = 5
+        step = 1
         cdf_df = compute_cdf(df, "engagement_event_count", step)
         x_label = "Event Count Threshold"
         y_label = "Percent of Users with More Events"
