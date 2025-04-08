@@ -22,8 +22,10 @@ with tab1:
     by_percent = st.toggle("By Percent", value=True)
     uic.engagement_histogram(
         df_cr_engagement, key="CRE-1", as_percent=by_percent, min_seconds=min_seconds)
+    uic.cumulative_distribution_chart(df_cr_engagement, key="CRE-1a")
     uic.engagement_histogram_log(
         df_cr_engagement, nbins=50, key="CRE-2", as_percent=by_percent, min_seconds=min_seconds)
+
 
 with tab2:
     uic.engagement_by_country_bar_chart(df_cr_engagement, "CRE-6a")
