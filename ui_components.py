@@ -460,58 +460,59 @@ def compute_cdf(df, col, step):
 
     data = []
     for t in thresholds:
-        count = (df[col] > t).sum()
-        if count < 20:
-            break  # Stop once user count drops below 20
-        data.append((t, count))
+        proportion = (df[col] > t).mean()
+        percent = proportion * 100
+        if percent < 1:  # Stop when less than 1% of users exceed threshold
+            break
+        data.append((t, percent))
 
-    return pd.DataFrame(data, columns=["threshold", "user_count"])
+    return pd.DataFrame(data, columns=["threshold", "user_percent"])
 
 
 def cumulative_distribution_chart(df, key="key"):
     df["total_time_minutes"] = df["total_time_seconds"] / 60
 
-    # Let the user choose metric
     c1, c2 = st.columns([1, 4])
     with c1:
         option = st.selectbox(
-        "Select metric to display:",
-        options=["Users Over Time", "Users Over Events"],
-        key=f"select_{key}"
-    )
+            "Select metric to display:",
+            options=["Users Over Time", "Users Over Events"],
+            key=f"select_{key}"
+        )
 
     if option == "Users Over Time":
-        step = 5  # minutes
+        step = 5
         cdf_df = compute_cdf(df, "total_time_minutes", step)
         x_label = "Time Threshold (minutes)"
-        y_label = "Users with more time"
+        y_label = "Percent of Users with More Time"
         hover_template = (
             "Time Threshold: %{x} minutes<br>" +
-            "Users Above Threshold: %{y}<extra></extra>"
+            "Users Above Threshold: %{y:.2f}%<extra></extra>"
         )
     else:
-        step = 5  # event count step
+        step = 5
         cdf_df = compute_cdf(df, "engagement_event_count", step)
         x_label = "Event Count Threshold"
-        y_label = "Users with more events"
+        y_label = "Percent of Users with More Events"
         hover_template = (
             "Event Threshold: %{x} events<br>" +
-            "Users Above Threshold: %{y}<extra></extra>"
+            "Users Above Threshold: %{y:.2f}%<extra></extra>"
         )
 
-    # Only plot if we have data after applying the 20-user cutoff
     if not cdf_df.empty:
         fig = px.line(
             cdf_df,
             x="threshold",
-            y="user_count",
-            labels={"threshold": x_label, "user_count": y_label},
+            y="user_percent",
+            labels={"threshold": x_label, "user_percent": y_label},
             title=option
         )
 
         fig.update_traces(mode="lines+markers", hovertemplate=hover_template)
-        fig.update_layout(xaxis_range=[0, cdf_df["threshold"].max()])
+        fig.update_layout(yaxis_ticksuffix="%", xaxis_range=[
+                          0, cdf_df["threshold"].max()])
 
         st.plotly_chart(fig, use_container_width=True, key=f"{key}_plot")
     else:
-        st.warning("No data to plot — fewer than 20 users exceed any threshold.")
+        st.warning(
+            "No data to plot — fewer than 1% of users exceed any threshold.")
