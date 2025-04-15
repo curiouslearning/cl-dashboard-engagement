@@ -31,7 +31,7 @@ async def get_users_list():
         # Define the queries
         sql_cr_engagement = f"""
             SELECT *
-            FROM `dataexploration-193817.user_data.cr_user_engagement`
+            FROM `dataexploration-193817.user_data.cr_user_engagement_inc`
             WHERE first_open BETWEEN PARSE_DATE('%Y/%m/%d','{start_date}') AND CURRENT_DATE()
         """
 
