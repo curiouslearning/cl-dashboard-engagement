@@ -13,5 +13,5 @@ c1, c2 = st.columns([1, 8])
 
 df_cr_engagement = st.session_state["df_cr_engagement"]
     
-uic.engagement_device_analysis(df=df_cr_engagement, min_users=100,max_devices=25, key="dev-2")
+uic.engagement_device_analysis(df=df_cr_engagement, min_users=15,max_devices=25, key="dev-2")
 
