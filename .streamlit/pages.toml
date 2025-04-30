@@ -8,3 +8,8 @@ path = "app_pages/CR_Engagement.py"
 name = "CR Engagement"
 icon = ":palm_tree:"
 
+[[pages]]
+path = "app_pages/devices.py"
+name = "Devices"
+icon = ":iphone:"
+

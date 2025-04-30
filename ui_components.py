@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import ui_widgets as ui
 
 # Caches a CSV version of the dataframe for downloads
 @st.cache_data
@@ -516,3 +517,171 @@ def cumulative_distribution_chart(df, key="key"):
     else:
         st.warning(
             "No data to plot — fewer than 1% of users exceed any threshold.")
+        
+
+def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
+    df = df.copy()
+
+    # Prepare data
+    df["total_time_minutes"] = df["total_time_seconds"] / 60
+
+    # Normalize "empty-ish" values to "(unknown)"
+    for col in ["device_category", "device_mobile_brand_name", "device_mobile_model_name", "device_mobile_marketing_name"]:
+        if col in df.columns:
+            df[col] = df[col].replace("", None).fillna("(unknown)")
+
+    # Streamlit layout: 2 columns
+    col1, col2 = st.columns(2)
+
+    with col1:
+        groupby_option = st.radio(
+            "Group by device field:",
+            options=[
+                "device_category",
+                "device_mobile_brand_name",
+                "device_mobile_model_name",
+                "device_mobile_marketing_name"
+            ],
+            index=0,
+            key=f"{key}-groupby-radio"
+        )
+
+    with col2:
+        metric_option = st.radio(
+            "Metric to focus on:",
+            options=["Total Engagement Minutes", "Engagement Event Count"],
+            index=0,
+            key=f"{key}-metric-radio"
+        )
+
+        view_option = st.radio(
+            "View Type:",
+            options=["Top Devices by Total", "Top Devices by Average Per User",
+                     "Scatter Plot: Users vs Engagement"],
+            index=0,
+            key=f"{key}-view-radio"
+        )
+
+    # Aggregate
+    df_summary = (
+        df.groupby(groupby_option, dropna=False)
+        .agg(
+            total_minutes=("total_time_minutes", "sum"),
+            total_events=("engagement_event_count", "sum"),
+            user_count=("user_pseudo_id", "nunique")
+        )
+        .reset_index()
+    )
+
+    # Calculate averages
+    df_summary["avg_minutes_per_user"] = df_summary["total_minutes"] / \
+        df_summary["user_count"]
+    df_summary["avg_events_per_user"] = df_summary["total_events"] / \
+        df_summary["user_count"]
+
+    # Filter based on min_users
+    df_summary = df_summary[df_summary["user_count"] >= min_users]
+
+    # Choose metric
+    if metric_option == "Total Engagement Minutes":
+        total_col = "total_minutes"
+        avg_col = "avg_minutes_per_user"
+        y_label_total = "Total Engagement Time (minutes)"
+        y_label_avg = "Average Engagement Time per User (minutes)"
+    else:
+        total_col = "total_events"
+        avg_col = "avg_events_per_user"
+        y_label_total = "Total Engagement Event Count"
+        y_label_avg = "Average Engagement Events per User"
+
+    # Format for hover
+    df_summary["user_count_fmt"] = df_summary["user_count"].apply(
+        lambda x: f"{x:,}")
+    df_summary["total_fmt"] = df_summary[total_col].apply(
+        lambda x: f"{x:,.0f}" if x >= 100 else f"{x:.2f}")
+    df_summary["avg_fmt"] = df_summary[avg_col].apply(lambda x: f"{x:.2f}")
+
+    if view_option == "Top Devices by Total":
+        df_plot = df_summary.sort_values(
+            total_col, ascending=False).head(max_devices)
+
+        fig = px.bar(
+            df_plot,
+            x=groupby_option,
+            y=total_col,
+            labels={groupby_option: groupby_option.replace("_", " ").title()},
+            title=f"Top {max_devices} {groupby_option.replace('_', ' ').title()} by {y_label_total}",
+            custom_data=[groupby_option,
+                         "user_count_fmt", "total_fmt", "avg_fmt"]
+        )
+
+        fig.update_traces(
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br><br>"
+                "Users: %{customdata[1]}<br>"
+                "Total: %{customdata[2]}<br>"
+                "Average per User: %{customdata[3]}<extra></extra>"
+            )
+        )
+
+        fig.update_layout(xaxis_tickangle=-45)
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif view_option == "Top Devices by Average Per User":
+        df_plot = df_summary.sort_values(
+            avg_col, ascending=False).head(max_devices)
+
+        fig = px.bar(
+            df_plot,
+            x=groupby_option,
+            y=avg_col,
+            labels={groupby_option: groupby_option.replace("_", " ").title()},
+            title=f"Top {max_devices} {groupby_option.replace('_', ' ').title()} by {y_label_avg}",
+            custom_data=[groupby_option,
+                         "user_count_fmt", "total_fmt", "avg_fmt"]
+        )
+
+        fig.update_traces(
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br><br>"
+                "Users: %{customdata[1]}<br>"
+                "Total: %{customdata[2]}<br>"
+                "Average per User: %{customdata[3]}<extra></extra>"
+            )
+        )
+
+        fig.update_layout(xaxis_tickangle=-45)
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:  # Scatter plot (show all qualifying devices)
+        fig = px.scatter(
+            df_summary,
+            x="user_count",
+            y=total_col,
+            size=avg_col,
+            color=groupby_option,
+            labels={
+                "user_count": "Number of Users",
+                total_col: y_label_total,
+                avg_col: y_label_avg
+            },
+            title=f"Users vs {y_label_total} by {groupby_option.replace('_', ' ').title()}",
+            custom_data=[groupby_option,
+                         "user_count_fmt", "total_fmt", "avg_fmt"]
+        )
+
+        fig.update_traces(
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br><br>"
+                "Users: %{customdata[1]}<br>"
+                "Total: %{customdata[2]}<br>"
+                "Average per User: %{customdata[3]}<extra></extra>"
+            )
+        )
+
+        fig.update_layout(
+            xaxis_title="Number of Users",
+            yaxis_title=y_label_total,
+            hovermode="closest"
+        )
+        st.plotly_chart(fig, use_container_width=True)
