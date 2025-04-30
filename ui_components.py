@@ -685,3 +685,7 @@ def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
             hovermode="closest"
         )
         st.plotly_chart(fig, use_container_width=True)
+        
+    csv = ui.convert_for_download(df_summary)
+    st.download_button(label="Download CSV", data=csv, file_name="devices.csv",
+                    key="dev-1", icon=":material/download:", mime="text/csv")
