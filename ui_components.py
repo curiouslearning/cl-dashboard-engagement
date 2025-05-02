@@ -557,7 +557,7 @@ def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
         view_option = st.radio(
             "View Type:",
             options=["Top Devices by Total", "Top Devices by Average Per User",
-                     "Scatter Plot: Users vs Engagement"],
+                     "Scatter Plot: Engagement Analysis"],
             index=0,
             key=f"{key}-view-radio"
         )
@@ -653,19 +653,35 @@ def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
         fig.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig, use_container_width=True)
 
-    else:  # Scatter plot (show all qualifying devices)
+    else:  # Scatter plot
+        scatter_x_option = st.radio(
+            "Scatter X-axis:",
+            options=["Number of Users", "Average per User"],
+            index=0,
+            key=f"{key}-scatter-x-radio"
+        )
+
+        if scatter_x_option == "Number of Users":
+            x_axis = "user_count"
+            size_axis = avg_col
+            x_axis_label = "Number of Users"
+        else:
+            x_axis = avg_col
+            size_axis = "user_count"
+            x_axis_label = y_label_avg
+
         fig = px.scatter(
             df_summary,
-            x="user_count",
+            x=x_axis,
             y=total_col,
-            size=avg_col,
+            size=size_axis,
             color=groupby_option,
             labels={
-                "user_count": "Number of Users",
+                x_axis: x_axis_label,
                 total_col: y_label_total,
-                avg_col: y_label_avg
+                size_axis: "Bubble Size"
             },
-            title=f"Users vs {y_label_total} by {groupby_option.replace('_', ' ').title()}",
+            title=f"{x_axis_label} vs {y_label_total} by {groupby_option.replace('_', ' ').title()}",
             custom_data=[groupby_option,
                          "user_count_fmt", "total_fmt", "avg_fmt"]
         )
@@ -680,12 +696,8 @@ def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
         )
 
         fig.update_layout(
-            xaxis_title="Number of Users",
+            xaxis_title=x_axis_label,
             yaxis_title=y_label_total,
             hovermode="closest"
         )
         st.plotly_chart(fig, use_container_width=True)
-        
-    csv = ui.convert_for_download(df_summary)
-    st.download_button(label="Download CSV", data=csv, file_name="devices.csv",
-                    key="dev-1", icon=":material/download:", mime="text/csv")
