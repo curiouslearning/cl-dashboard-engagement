@@ -7,7 +7,7 @@ import logging
 import asyncio
 
 # How far back to obtain user data.  Currently the queries pull back to 01/01/2021
-start_date = "2025/01/01"
+start_date = "2023/01/01"
 
 # Firebase returns two different formats of user_pseudo_id between
 # web app events and android events, so we have to run multiple queries
@@ -31,7 +31,7 @@ async def get_users_list():
         # Define the queries
         sql_cr_engagement = f"""
             SELECT *
-            FROM `dataexploration-193817.user_data.cr_user_engagement_inc`
+            FROM `dataexploration-193817.user_data.cr_user_engagement`
             WHERE first_open BETWEEN PARSE_DATE('%Y/%m/%d','{start_date}') AND CURRENT_DATE()
         """
 
