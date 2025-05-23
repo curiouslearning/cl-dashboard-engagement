@@ -31,12 +31,14 @@ async def get_users_list():
         # Define the queries
         sql_cr_engagement = f"""
             SELECT *
-            FROM `dataexploration-193817.user_data.cr_user_engagement`
+            FROM `dataexploration-193817.user_data.cr_app_launch`
             WHERE first_open BETWEEN PARSE_DATE('%Y/%m/%d','{start_date}') AND CURRENT_DATE()
         """
 
         # Run all the queries asynchronously
         df_cr_engagement, = await asyncio.gather(run_query(sql_cr_engagement))   
+        
+        df_cr_engagement = df_cr_engagement.drop_duplicates(subset='cr_user_id')
 
     p.print(color="red")
     
