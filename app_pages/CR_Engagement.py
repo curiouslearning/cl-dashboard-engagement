@@ -8,16 +8,23 @@ import settings
 settings.initialize()
 settings.init_user_list()
 
-c1, c2 = st.columns([1, 8])
+c1, c2 = st.columns([1, 3])
 with c1:
     min_minutes = st.number_input("Min Minutes Played", value=1)
-    
-df_cr_engagement = st.session_state["df_cr_engagement"]
-# 1. Create the tabs first
-tab1, tab2, tab3, tab4, tab5, tab6= st.tabs(
-    ["Histograms", "By Country", "Scatter Plot", "Over Time", "Box Plot","Pareto"])
 
-with tab1:
+df_cr_engagement = st.session_state["df_cr_engagement"]
+
+
+# Use selectbox instead of st.tabs for lazy evaluation
+tab_options = [
+    "Histograms", "By Country", "Scatter Plot",
+    "Over Time", "Box Plot", "Pareto"
+]
+with c2:
+    selected_tab = st.selectbox("Select Analysis View", tab_options)
+
+# Conditional rendering
+if selected_tab == "Histograms":
     by_percent = st.toggle("By Percent", value=True)
     uic.engagement_histogram(
         df_cr_engagement, key="CRE-1", as_percent=by_percent, min_minutes=min_minutes)
@@ -25,27 +32,27 @@ with tab1:
     uic.engagement_histogram_log(
         df_cr_engagement, nbins=50, key="CRE-2", as_percent=by_percent, min_minutes=min_minutes)
 
-
-with tab2:
+elif selected_tab == "By Country":
     uic.engagement_by_country_bar_chart(df_cr_engagement, "CRE-6a")
     st.divider()
     uic.most_engaged_users_chart(df_cr_engagement, key="CRE-6")
-    
-with tab3:
+
+elif selected_tab == "Scatter Plot":
     uic.engagement_scatter_plot(
         df_cr_engagement, key="CRE-3", min_minutes=min_minutes)
 
-with tab4:
+elif selected_tab == "Over Time":
     uic.first_open_vs_total_time(df_cr_engagement, key="CRE-7")
 
-with tab5:
+elif selected_tab == "Box Plot":
     uic.engagement_box_plot(
         df_cr_engagement, key="CRE-5", min_minutes=min_minutes)
-    
-with tab6:
+
+elif selected_tab == "Pareto":
     uic.engagement_pareto_chart(
         df_cr_engagement, key="CRE-4", min_minutes=min_minutes)
 
+# CSV export remains at the bottom
 csv = ui.convert_for_download(df_cr_engagement)
 st.download_button(label="Download CSV", data=csv, file_name="df_cr_engagement.csv",
                    key="fc-10", icon=":material/download:", mime="text/csv")
