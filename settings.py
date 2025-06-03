@@ -49,11 +49,26 @@ def initialize():
         st.session_state["bq_client"] = bq_client
 
 def init_user_list():
-   
-    df_cr_engagement = cache_users_list()
 
-    if "df_cr_engagement" not in st.session_state:
-        st.session_state["df_cr_engagement"] = df_cr_engagement
+    df_day1_app_remove, df_cr_app_launch, google_ads_data, facebook_ads_data = cache_users_list()
+
+    if "df_cr_app_launch" not in st.session_state:
+        st.session_state["df_cr_app_launch"] = df_cr_app_launch
+
+    if "df_google_ads_data" not in st.session_state:
+        st.session_state["df_google_ads_data"] = google_ads_data
+
+    if "df_facebook_ads_data" not in st.session_state:
+        st.session_state["df_facebook_ads_data"] = facebook_ads_data
+
+        # only keep one cr_user_id row per user
+        df_cr_app_launch = df_cr_app_launch.drop_duplicates(
+            subset='cr_user_id')
+
+        # remove the users who uninstalled on day 1
+        df_cr_app_launch = df_cr_app_launch[~df_cr_app_launch["user_pseudo_id"].isin(
+            df_day1_app_remove["user_pseudo_id"])]
+
 
 
 @st.cache_data(ttl="1d", show_spinner="Gathering User List")
