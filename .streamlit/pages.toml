@@ -8,6 +8,12 @@ path = "app_pages/CR_Engagement.py"
 name = "CR Engagement"
 icon = ":palm_tree:"
 
+
+[[pages]]
+path = "app_pages/engagement_cost_per_minute.py"
+name = "Engagement Cost per Minute"
+icon = ":heavy_dollar_sign:"
+
 [[pages]]
 path = "app_pages/devices.py"
 name = "Devices"

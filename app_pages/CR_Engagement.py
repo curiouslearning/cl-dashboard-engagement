@@ -5,6 +5,7 @@ import ui_widgets as ui
 import ui_components as uic
 import settings
 
+
 settings.initialize()
 settings.init_user_list()
 

@@ -8,8 +8,9 @@ import datetime as dt
 from google.cloud import secretmanager
 import json
 import asyncio
+import campaigns
 
-default_daterange = [dt.datetime(2021, 1, 1).date(), dt.date.today()]
+default_daterange = [dt.datetime(2024, 5, 1).date(), dt.date.today()]
 
 
 def get_gcp_credentials():
@@ -50,25 +51,18 @@ def initialize():
 
 def init_user_list():
 
-    df_day1_app_remove, df_cr_app_launch, google_ads_data, facebook_ads_data = cache_users_list()
+    df_day1_app_remove, df_cr_app_launch, = cache_users_list()
 
+    # only keep one cr_user_id row per user
+    df_cr_app_launch = df_cr_app_launch.drop_duplicates(
+        subset='cr_user_id')
+
+    # remove the users who uninstalled on day 1
+    df_cr_app_launch = df_cr_app_launch[~df_cr_app_launch["user_pseudo_id"].isin(
+        df_day1_app_remove["user_pseudo_id"])]
+    
     if "df_cr_app_launch" not in st.session_state:
         st.session_state["df_cr_app_launch"] = df_cr_app_launch
-
-    if "df_google_ads_data" not in st.session_state:
-        st.session_state["df_google_ads_data"] = google_ads_data
-
-    if "df_facebook_ads_data" not in st.session_state:
-        st.session_state["df_facebook_ads_data"] = facebook_ads_data
-
-        # only keep one cr_user_id row per user
-        df_cr_app_launch = df_cr_app_launch.drop_duplicates(
-            subset='cr_user_id')
-
-        # remove the users who uninstalled on day 1
-        df_cr_app_launch = df_cr_app_launch[~df_cr_app_launch["user_pseudo_id"].isin(
-            df_day1_app_remove["user_pseudo_id"])]
-
 
 
 @st.cache_data(ttl="1d", show_spinner="Gathering User List")
@@ -77,3 +71,21 @@ def cache_users_list():
     return asyncio.run(users.get_users_list())
 
 
+# Get the campaign data from BigQuery, roll it up per campaign
+def init_campaign_data():
+    # Call the combined asynchronous campaign data function
+    df_goog_all, df_fb_all = cache_marketing_data()
+
+    # Get all campaign data by segment_date
+    df_campaigns_all = pd.concat([df_goog_all, df_fb_all])
+    df_campaigns_all = campaigns.add_country_and_language(df_campaigns_all)
+    df_campaigns_all = df_campaigns_all.reset_index(drop=True)
+
+    if "df_campaigns_all" not in st.session_state:
+        st.session_state["df_campaigns_all"] = df_campaigns_all
+
+
+@st.cache_data(ttl="1d", show_spinner="Gathering Marketing Data")
+def cache_marketing_data():
+    # Execute the async function and return its result synchronously
+    return asyncio.run(campaigns.get_campaign_data())
