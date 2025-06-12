@@ -9,10 +9,10 @@ name = "CR Engagement"
 icon = ":palm_tree:"
 
 
-[[pages]]
-path = "app_pages/cost_per_engagement_minute.py"
-name = "Cost per Engagement Minute (CPEM)"
-icon = ":heavy_dollar_sign:"
+##[[pages]]
+#path = "app_pages/cost_per_engagement_minute.py"
+#name = "Cost per Engagement Minute (CPEM)"
+#icon = ":heavy_dollar_sign:"
 
 [[pages]]
 path = "app_pages/devices.py"
