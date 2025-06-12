@@ -143,33 +143,3 @@ def rollup_campaign_data(df):
     return df
 
 
-
-@st.cache_data(ttl="1d", show_spinner=True)
-def build_campaign_table(df, daterange):
-
-    df = (
-        df.groupby(["country"], as_index=False)
-        .agg(
-            {
-                "cost": "sum",
-            }
-        )
-        .round(2)
-    )
-
-
-    for idx, row in df.iterrows():
-        country_list = [row["country"]]
-
-        LR = metrics.get_LR(
-                countries_list=country_list,
-                daterange=daterange,
-            )
-        df.at[idx, "LR"] = LR
-        df.at[idx, "LRC"] = (
-                (df.at[idx, "cost"] / LR).round(2) if LR != 0 else 0
-        )
-
-
-    return df
-

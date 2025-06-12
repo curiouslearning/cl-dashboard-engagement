@@ -699,3 +699,75 @@ def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
     st.download_button(label="Download summary data", data=csv, file_name="df_summary.csv",
                        key="d2", icon=":material/download:", mime="text/csv")
 
+
+def cpem_scatter_plot(df_display):
+
+    required_columns = ["CPEM", "literacy_rate", "cost",
+                        "total_minutes", "avg_time_minutes", "LR", "LRC"]
+
+    df_display = df_display.dropna(subset=required_columns)
+
+    # Remove Sierra Leone (outlier)
+    df_display = df_display[df_display["country"] != "Sierra Leone"]
+
+    # Format spend
+    df_display["spend"] = df_display["cost"].round(0).astype("Int64")
+    df_display["spend_formatted"] = df_display["spend"].map(
+        lambda x: f"${x:,}" if pd.notnull(x) else ""
+    )
+
+    custom_data = ["spend_formatted", "country", "LR", "LRC"]
+
+
+    hovertemplate = (
+    "<b>%{customdata[1]}</b><br>" +
+    "CPEM=%{x:.2f}<br>" +
+    "Literacy rate=%{y:.1f}<br>" +
+    "Spend=%{customdata[0]}<br>" +
+    "LR=%{customdata[2]}<br>" +
+    "LRC=%{customdata[3]}<extra></extra>"
+)
+    
+    # Build the scatter plot
+    fig = px.scatter(
+        df_display,
+        x="CPEM",
+        y="literacy_rate",
+        text="country",
+        hover_name="country",
+        size="cost",
+        size_max=20,
+        custom_data=custom_data,
+        labels={
+            "CPEM": "CPEM",
+            "literacy_rate": "Literacy rate"
+        },
+        title="Cost Efficiency vs. Literacy Rate by Country",
+        height=800
+    )
+
+
+    hovertemplate = (
+        "<b>%{customdata[1]}</b><br>" +
+        "CPEM=%{x:.2f}<br>" +
+        "Literacy rate=%{y:.1f}<br>" +
+        "Spend=%{customdata[0]}<br>" +
+        "LR=%{customdata[2]}<br>" +   # removed colon-comma formatting
+        "LRC=%{customdata[3]}<extra></extra>"
+    )
+    
+    fig.update_traces(
+        textposition="top center",
+        hovertemplate=hovertemplate
+        )
+    
+
+    fig.update_layout(
+        xaxis_tickformat=".2f",
+        yaxis_tickformat=".1f",
+        plot_bgcolor="#1f2c56",
+        paper_bgcolor="#1f2c56",
+        font_color="#ffffff"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)

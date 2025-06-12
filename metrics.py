@@ -8,47 +8,66 @@ import users
 
 from config import default_daterange
 
-def get_LR(
-    daterange=default_daterange,
-    countries_list=[],
 
-):
+@st.cache_data(ttl="1d", show_spinner=True)
+def build_engagement_cost_table(df_campaigns, df_users):
+    # Remove Unity campaigns (e.g., FTM)
+    df_campaigns = df_campaigns[~df_campaigns["campaign_name"].str.contains(
+        "FTM", na=False)]
 
-    # if no list passed in then get the full list
-    if len(countries_list) == 0:
-        countries_list = users.get_country_list()
-
-    df_user_list = filter_user_data(
-        daterange=daterange, countries_list=countries_list
+    # Aggregate total cost by country
+    df_campaigns = (
+        df_campaigns.groupby("country", as_index=False)
+        .agg({"cost": "sum"})
+        .round(2)
     )
 
-    return len(df_user_list) #All LR 
+    # === Compute Literacy Rate (LR) per country (number of unique users) ===
+    df_lr = (
+        df_users.groupby("country", as_index=False)
+        .agg({"cr_user_id": "nunique"})
+        .rename(columns={"cr_user_id": "LR"})
+    )
 
+    # Merge LR and compute LRC (cost per user)
+    df_campaigns = df_campaigns.merge(df_lr, on="country", how="left")
+    df_campaigns["LRC"] = np.where(
+        df_campaigns["LR"] > 0,
+        (df_campaigns["cost"] / df_campaigns["LR"]).round(2),
+        0
+    )
 
-# Takes the complete user lists (cr_user_id) and filters based on input data, and returns
-# a new filtered dataset
-def filter_user_data(
-    daterange=default_daterange,
-    countries_list=["All"],
+    # Merge in external literacy_rate
+    countries_dataframe = users.get_country_literacy_dataframe()
+    df = df_campaigns.merge(
+        countries_dataframe[["country", "literacy_rate"]],
+        on="country", how="left"
+    )
 
-):
+    # Compute average time per user in minutes per country
+    df_users_avg = (
+        df_users.groupby("country", as_index=False)
+        .agg({"total_time_minutes": "mean"})
+        .rename(columns={"total_time_minutes": "avg_time_minutes"})
+        .round(2)
+    )
+    df = df.merge(df_users_avg, on="country", how="left")
 
-    # Check if necessary dataframes are available
-    if not all(key in st.session_state for key in [ "df_cr_app_launch"]):
-        print("PROBLEM!")
-        return pd.DataFrame()
+    # Compute total engagement minutes per country
+    df_total_minutes = (
+        df_users.groupby("country", as_index=False)
+        .agg({"total_time_minutes": "sum"})
+        .rename(columns={"total_time_minutes": "total_minutes"})
+        
+    )
+    df = df.merge(df_total_minutes, on="country", how="left")
 
-
-    df = st.session_state.df_cr_app_launch
-
-    # Initialize a boolean mask
-    mask = (df['first_open'] >= daterange[0]) & (df['first_open'] <= daterange[1])
-
-    if countries_list[0] != "All":
-        mask &= df['country'].isin(set(countries_list))
-    
-    # Filter the dataframe with the combined mask
-    df = df.loc[mask]
+    # Compute Cost Per Engagement Minute (CPEM)
+    df["CPEM"] = np.where(
+        df["total_minutes"] > 0,
+        (df["cost"] / df["total_minutes"]).round(2),
+        0
+    )
 
     return df
 

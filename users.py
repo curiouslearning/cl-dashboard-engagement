@@ -71,3 +71,24 @@ def get_country_list():
         df = pd.DataFrame(rows)
         countries_list = np.array(df.values).flatten().tolist()
     return countries_list
+
+
+@st.cache_data(ttl="1d", show_spinner=False)
+def get_country_literacy_dataframe():
+    countries_dataframe = []
+    if "bq_client" in st.session_state:
+        bq_client = st.session_state.bq_client
+        sql_query = f"""
+                    SELECT *
+                    FROM `dataexploration-193817.user_data.active_countries`
+                    order by country asc
+                    ;
+                    """
+        rows_raw = bq_client.query(sql_query)
+        rows = [dict(row) for row in rows_raw]
+        if len(rows) == 0:
+            return pd.DataFrame()
+
+        countries_dataframe = pd.DataFrame(rows)
+
+    return countries_dataframe
