@@ -85,13 +85,7 @@ def engagement_histogram(df, min_minutes=1, key="key", as_percent=False, percent
     st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_minutes}")
 
 
-# Log-scale histogram of total engagement time with manual binning and custom hover text
 def engagement_histogram_log(df, key, nbins=30, min_minutes=1, as_percent=False):
-    # Filter out very short sessions
-    df_log = df[df["total_time_minutes"] > min_minutes].copy()
-
-
-    # Apply log10 transform to total time (in seconds)
     # Filter rows based on total time in minutes
     df_log = df[df["total_time_minutes"] > min_minutes].copy()
 
@@ -120,7 +114,6 @@ def engagement_histogram_log(df, key, nbins=30, min_minutes=1, as_percent=False)
     bin_counts["min_left"] = (10 ** bin_counts["bin_left"]).round(2)
     bin_counts["min_right"] = (10 ** bin_counts["bin_right"]).round(2)
 
-
     # Format hover labels
     if as_percent:
         total_count = bin_counts["count"].sum()
@@ -144,29 +137,37 @@ def engagement_histogram_log(df, key, nbins=30, min_minutes=1, as_percent=False)
         width=np.diff(bin_edges)
     )])
 
-    # Custom ticks on x-axis (convert seconds to minutes)
-    tickvals_raw = [1, 3, 10, 30, 60, 120, 300, 600, 1800, 3600, 7200, 10000]
+    # Smart tick formatting function
+    def format_tick(mins):
+        if mins < 60:
+            return f"{int(mins)}m"
+        else:
+            hrs = mins // 60
+            rem = mins % 60
+            return f"{int(hrs)}h" if rem == 0 else f"{int(hrs)}h{int(rem)}m"
+
+    # Define tick values and labels (in minutes, not seconds)
+    tickvals_raw = [1, 3, 5, 10, 30, 60, 90, 120, 180, 300, 600, 1200]
     tickvals = [np.log10(val)
                 for val in tickvals_raw if min_log <= np.log10(val) <= max_log]
-    tick_minutes = [
-        val / 60 for val in tickvals_raw if min_log <= np.log10(val) <= max_log]
-    ticktext = [f"{m:.0f}m" if m >=
-                1 else f"{int(m * 60)}s" for m in tick_minutes]
+    ticktext = [format_tick(
+        val) for val in tickvals_raw if min_log <= np.log10(val) <= max_log]
 
+    # Update axes
     fig.update_xaxes(
         tickvals=tickvals,
         ticktext=ticktext,
         range=[min_log, max_log],
-        title_text="Total Play Time Distribution (Log Scale, Minutes) – Users > {min_minutes:.1f} min"
+        title_text=f"Total Play Time Distribution (Log Scale, Minutes) – Users > {min_minutes:.1f} min"
     )
-
     fig.update_yaxes(title_text="% of Users" if as_percent else "User Count")
     fig.update_layout(
         title="Log10 Histogram of Engagement Time (Minutes)"
     )
 
-    # Display in Streamlit
+    # Show in Streamlit
     st.plotly_chart(fig, use_container_width=True, key=f"{key}-{min_minutes}")
+
 
 
 def engagement_scatter_plot(df, min_minutes=1, key="key"):
