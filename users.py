@@ -32,24 +32,29 @@ async def get_users_list():
             FROM `dataexploration-193817.user_data.cr_app_launch`
             WHERE first_open BETWEEN PARSE_DATE('%Y-%m-%d','{start_date}') AND CURRENT_DATE()
         """
-        
+
+        sql_unity_users = f"""
+            SELECT *
+            FROM `dataexploration-193817.user_data.unity_user_progress`
+            WHERE first_open BETWEEN PARSE_DATE('%Y-%m-%d','{start_date}') AND CURRENT_DATE()
+        """
+
         sql_day1_app_remove = f"""
             SELECT *
             FROM `dataexploration-193817.user_data.day1_app_remove_users`
          """
          
+    # Correct the order to match expected return variables
+    df_unity_users, df_day1_app_remove, df_cr_app_launch = await asyncio.gather(
+        run_query(sql_unity_users),
+        run_query(sql_day1_app_remove),
+        run_query(sql_cr_app_launch),
+)
 
-
-        # Run all the queries asynchronously
-        df_day1_app_remove, df_cr_app_launch,  = await asyncio.gather(
-            run_query(sql_day1_app_remove),
-            run_query(sql_cr_app_launch),
-
-        )
 
     p.print(color="red")
     
-    return df_day1_app_remove, df_cr_app_launch
+    return df_unity_users, df_day1_app_remove, df_cr_app_launch
 
     
 @st.cache_data(ttl="1d", show_spinner=False)

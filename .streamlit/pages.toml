@@ -11,11 +11,11 @@ icon = ":palm_tree:"
 
 [[pages]]
 path = "app_pages/cost_per_engagement_minute.py"
-name = "Cost Per Engagement Minute (CPEM)"
+name = "CR Cost Per Engagement Minute (CPEM)"
 icon = ":heavy_dollar_sign:"
 
 [[pages]]
 path = "app_pages/devices.py"
-name = "Devices"
+name = "CR Devices"
 icon = ":iphone:"
 

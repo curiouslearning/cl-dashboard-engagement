@@ -51,7 +51,7 @@ def initialize():
 
 def init_user_list():
 
-    df_day1_app_remove, df_cr_app_launch, = cache_users_list()
+    df_unity_users, df_day1_app_remove, df_cr_app_launch, = cache_users_list()
 
     # only keep one cr_user_id row per user
     df_cr_app_launch = df_cr_app_launch.drop_duplicates(
@@ -60,9 +60,12 @@ def init_user_list():
     # remove the users who uninstalled on day 1
     df_cr_app_launch = df_cr_app_launch[~df_cr_app_launch["user_pseudo_id"].isin(
         df_day1_app_remove["user_pseudo_id"])]
-    
+
     if "df_cr_app_launch" not in st.session_state:
         st.session_state["df_cr_app_launch"] = df_cr_app_launch
+
+    if "df_unity_users" not in st.session_state:
+        st.session_state["df_unity_users"] = df_unity_users
 
 
 @st.cache_data(ttl="1d", show_spinner="Gathering User List")

@@ -269,16 +269,16 @@ def app_selector(placement="side"):
     if placement == "side":
         app = st.sidebar.radio(
             label="Application",
-            options=["Unity", "CR", "Both"],
+            options=["Unity", "CR"],
             horizontal=True,
-            index=2,
+            index=1,
         )
     else:
         app = st.radio(
             label="Application",
-            options=["Unity", "CR", "Both"],
+            options=["Unity", "CR"],
             horizontal=True,
-            index=2,
+            index=1,
         )
     return app
 

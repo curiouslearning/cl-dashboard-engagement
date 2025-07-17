@@ -13,7 +13,14 @@ c1, c2 = st.columns([1, 3])
 with c1:
     min_minutes = st.number_input("Min Minutes Played", value=1)
 
-df_cr_app_launch = st.session_state["df_cr_app_launch"]
+
+app = ui.app_selector()
+if (app == "CR"):
+    df = st.session_state["df_cr_app_launch"]
+    df["user_id"] = df["cr_user_id"]
+else:
+    df = st.session_state["df_unity_users"]
+    df["user_id"] = df["user_pseudo_id"]
 
 
 # Use selectbox instead of st.tabs for lazy evaluation
@@ -28,32 +35,32 @@ with c2:
 if selected_tab == "Histograms":
     by_percent = st.toggle("By Percent", value=True)
     uic.engagement_histogram(
-        df_cr_app_launch, key="CRE-1", as_percent=by_percent, min_minutes=min_minutes)
-    uic.cumulative_distribution_chart(df_cr_app_launch, key="CRE-1a")
+        df, key="CRE-1", as_percent=by_percent, min_minutes=min_minutes)
+    uic.cumulative_distribution_chart(df, key="CRE-1a")
     uic.engagement_histogram_log(
-        df_cr_app_launch, nbins=50, key="CRE-2", as_percent=by_percent, min_minutes=min_minutes)
+        df, nbins=50, key="CRE-2", as_percent=by_percent, min_minutes=min_minutes)
 
 elif selected_tab == "By Country":
-    uic.engagement_by_country_bar_chart(df_cr_app_launch, "CRE-6a")
+    uic.engagement_by_country_bar_chart(df, "CRE-6a")
     st.divider()
-    uic.most_engaged_users_chart(df_cr_app_launch, key="CRE-6")
+    uic.most_engaged_users_chart(df, key="CRE-6")
 
 elif selected_tab == "Scatter Plot":
     uic.engagement_scatter_plot(
-        df_cr_app_launch, key="CRE-3", min_minutes=min_minutes)
+        df, key="CRE-3", min_minutes=min_minutes)
 
 elif selected_tab == "Over Time":
-    uic.first_open_vs_total_time(df_cr_app_launch, key="CRE-7")
+    uic.first_open_vs_total_time(df, key="CRE-7")
 
 elif selected_tab == "Box Plot":
     uic.engagement_box_plot(
-        df_cr_app_launch, key="CRE-5", min_minutes=min_minutes)
+        df, key="CRE-5", min_minutes=min_minutes)
 
 elif selected_tab == "Pareto":
     uic.engagement_pareto_chart(
-        df_cr_app_launch, key="CRE-4", min_minutes=min_minutes)
+        df, key="CRE-4", min_minutes=min_minutes)
 
 # CSV export remains at the bottom
-csv = ui.convert_for_download(df_cr_app_launch)
-st.download_button(label="Download CSV", data=csv, file_name="df_cr_app_launch.csv",
+csv = ui.convert_for_download(df)
+st.download_button(label="Download CSV", data=csv, file_name="users.csv",
                    key="fc-10", icon=":material/download:", mime="text/csv")

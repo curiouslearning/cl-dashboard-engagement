@@ -49,9 +49,9 @@ def engagement_histogram(df, min_minutes=1, key="key", as_percent=False, percent
     # Step 4: Calculate values & hovertext
     if as_percent:
         if show_percent_of_all:
-            total = df["cr_user_id"].nunique()
+            total = df["user_id"].nunique()
         else:
-            total = df_trimmed["cr_user_id"].nunique()
+            total = df_trimmed["user_id"].nunique()
 
         bin_counts["percent"] = 100 * bin_counts["count"] / total
         bin_counts = bin_counts[bin_counts["percent"] >= percent_cutoff]
@@ -531,7 +531,7 @@ def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
                 "device_mobile_model_name",
                 "device_mobile_marketing_name"
             ],
-            index=0,
+            index=1,
             key=f"{key}-groupby-radio"
         )
 
