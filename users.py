@@ -29,7 +29,7 @@ async def get_users_list():
         # Define the queries
         sql_cr_app_launch = f"""
             SELECT *
-            FROM `dataexploration-193817.user_data.cr_app_launch`
+            FROM `dataexploration-193817.user_data.cr_app_launch_device_data`
             WHERE first_open BETWEEN PARSE_DATE('%Y-%m-%d','{start_date}') AND CURRENT_DATE()
         """
 
