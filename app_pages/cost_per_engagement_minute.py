@@ -1,17 +1,16 @@
 import streamlit as st
 from rich import print as rprint
 from millify import prettify
-import settings
 import metrics
 import users
 import ui_components as uic
 
+from settings import default_daterange
+from settings import initialize
+from settings import init_data
 
-settings.initialize()
-settings.init_user_list()
-settings.init_campaign_data()
-
-from config import default_daterange
+initialize()
+init_data()
 
 c1, c2 = st.columns([1, 8])
 

@@ -6,7 +6,7 @@ import datetime as dt
 import users
 
 
-from config import default_daterange
+from settings import default_daterange
 
 
 @st.cache_data(ttl="1d", show_spinner=True)

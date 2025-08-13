@@ -3,8 +3,7 @@ import pandas as pd
 from rich import print as print
 import asyncio
 from pyinstrument import Profiler
-import users
-import metrics
+
 
 start_date = '2024-05-01'
 # Starting 05/01/2024, campaign names were changed to support an indication of
@@ -15,8 +14,8 @@ start_date = '2024-05-01'
 async def get_campaign_data():
     p = Profiler(async_mode="disabled")
     with p:
-        bq_client = st.session_state.bq_client
-
+        from settings import get_gcp_credentials
+        _, bq_client = get_gcp_credentials()
         # Helper function to run BigQuery queries asynchronously
         async def run_query(query):
             return await asyncio.to_thread(bq_client.query(query).to_dataframe)

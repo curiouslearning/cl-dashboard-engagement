@@ -3,11 +3,12 @@ from rich import print as rprint
 from millify import prettify
 import ui_widgets as ui
 import ui_components as uic
-import settings
+from settings import initialize
+from settings import init_data
 
+initialize()
+init_data()
 
-settings.initialize()
-settings.init_user_list()
 
 c1, c2 = st.columns([1, 3])
 with c1:

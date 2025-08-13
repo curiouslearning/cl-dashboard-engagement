@@ -1,13 +1,13 @@
 import streamlit as st
 from rich import print as rprint
 from millify import prettify
-import ui_widgets as ui
 import ui_components as uic
-import settings
-import plotly.express as px
 
-settings.initialize()
-settings.init_user_list()
+from settings import initialize
+from settings import init_data
+
+initialize()
+init_data()
 
 c1, c2 = st.columns([1, 8])
 
