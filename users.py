@@ -163,34 +163,6 @@ def get_country_list():
 
 
 
-@st.cache_data(ttl="1d", show_spinner=False)
-def get_app_version_list():
-    app_versions = []
-    from settings import get_gcp_credentials
-    _, bq_client = get_gcp_credentials()
-
-    sql_query = f"""
-                SELECT *
-                FROM `dataexploration-193817.user_data.cr_app_versions`
-                """
-    rows_raw = bq_client.query(sql_query)
-    rows = [dict(row) for row in rows_raw]
-    if len(rows) == 0:
-        return pd.DataFrame()
-
-    df = pd.DataFrame(rows)
-    conditions = [
-        f"app_version >=  'v1.0.25'",
-    ]
-    query = " and ".join(conditions)
-    df = df.query(query)
-
-    app_versions = np.array(df.values).flatten().tolist()
-    app_versions.insert(0, "All")
-
-    return app_versions
-
-
 def fix_date_columns(df, columns):
     for col in columns:
         if col in df.columns:

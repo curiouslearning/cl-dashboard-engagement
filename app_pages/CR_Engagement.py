@@ -14,8 +14,12 @@ c1, c2 = st.columns([1, 3])
 with c1:
     min_minutes = st.number_input("Min Minutes Played", value=1)
 
-
-app = ui.app_selector()
+    app = st.radio(
+           label="Application",
+           options=["Unity", "CR"],
+           horizontal=True,
+           index=1,
+       )
 if (app == "CR"):
     df = st.session_state["df_cr_app_launch"]
     df["user_id"] = df["cr_user_id"]

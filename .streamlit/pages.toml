@@ -4,7 +4,7 @@ icon = ":popcorn:"
 is_section = true
 
 [[pages]]
-path = "app_pages/CR_Engagement.py"
+path = "app_pages/cr_engagement.py"
 name = "CR Engagement"
 icon = ":palm_tree:"
 

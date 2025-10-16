@@ -5,11 +5,6 @@ import plotly.graph_objects as go
 import streamlit as st
 import ui_widgets as ui
 
-# Caches a CSV version of the dataframe for downloads
-@st.cache_data
-def convert_for_download(df):
-    return df.to_csv().encode("utf-8")
-
 
 # Linear histogram of total engagement time (in minutes), with optional percent mode
 def engagement_histogram(df, min_minutes=1, key="key", as_percent=False, percent_cutoff=0.5):
@@ -526,12 +521,13 @@ def engagement_device_analysis(df, key="key-eda", min_users=50, max_devices=30):
         groupby_option = st.radio(
             "Group by device field:",
             options=[
+                "android_version",
                 "device_category",
                 "device_mobile_brand_name",
                 "device_mobile_model_name",
                 "device_mobile_marketing_name"
             ],
-            index=1,
+            index=0,
             key=f"{key}-groupby-radio"
         )
 
