@@ -22,8 +22,9 @@ def load_parquet_from_gcs(file_pattern: str) -> pd.DataFrame:
 
 
 def load_unity_user_progress_from_gcs():
-    return load_parquet_from_gcs("user_data_parquet_cache/unity_user_progress_*.parquet")
-
+    return load_parquet_from_gcs(
+        "user_data_parquet_cache/unity_user_progress/run_date=*/unity_user_progress_*.parquet"
+    )
 
 def load_day1_app_remove_from_gcs():
     return load_parquet_from_gcs("user_data_parquet_cache/day1_app_remove_from_gcs_*.parquet")
