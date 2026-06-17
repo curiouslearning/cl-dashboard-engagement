@@ -169,26 +169,3 @@ def fix_date_columns(df, columns):
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce")
     return df
-
-
-@st.cache_data(ttl="1d", show_spinner=False)
-def get_country_literacy_dataframe():
-    countries_dataframe = []
-    
-    from settings import get_gcp_credentials
-    _, bq_client = get_gcp_credentials()
-    
-    sql_query = f"""
-                    SELECT *
-                    FROM `dataexploration-193817.user_data.active_countries`
-                    order by country asc
-                    ;
-                    """
-    rows_raw = bq_client.query(sql_query)
-    rows = [dict(row) for row in rows_raw]
-    if len(rows) == 0:
-        return pd.DataFrame()
-
-    countries_dataframe = pd.DataFrame(rows)
-
-    return countries_dataframe
