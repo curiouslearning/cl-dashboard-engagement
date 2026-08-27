@@ -45,4 +45,4 @@ There is no test suite, linter config, or type checker wired up.
 - `ui_components.py` — all Plotly chart helpers (histograms, scatter, pareto, box plot, device analysis). Components take a dataframe + a `key` string; pass unique keys per page or Streamlit will complain.
 - `ui_widgets.py` — small reusable widgets (selectors, CSV download helper).
 - `app_pages/` — one file per nav entry; thin glue that pulls from `session_state` and calls into `ui_components`.
-- `Queries/cr_app_launch_device_data.sql` — reference SQL for the CR Parquet snapshot in GCS. Not run by the app; the Parquet is produced by an external pipeline.
+- Query definitions live in the `cl-data-dashboard` repo, which owns all dashboard SQL. The CR Parquet snapshot this app reads is defined by `queries/cr_app_launch_device_data.sql` there; it is not run by this app.
